@@ -24,6 +24,5 @@ The function name is "**PseudoVym**" however there's a built in alias called "**
 
 Use the **Get-Help** or the **-Help** switch for more info.
 
-Also...
-
+# 200 IQ
 Walmart brand *Vim*... Vim *Pseudonym*... *Pseudo-Vim*... **PSEUDOVYM**.  Cheeky, I'm aware.
