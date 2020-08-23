@@ -19,10 +19,14 @@ from the user, ignoring specific keys, and adding special functionality to other
    *[] Right Alt  --  Quit without Saving*
 
    *[] Ctrl       --  Open rudimentary "Developer Console" styled after Vim syntax*
+   
+   *[] Delete     --  Remove entire Active Line*
 
 The function name is "**PseudoVym**" however there's a built in alias called "**vim**".
 
-Use the **Get-Help** or the **-Help** switch for more info.
+Use **Get-Help** or the **-Help** switch for more info.
+
+Use the **-Debug** switch for live verbose input and placement information.
 
 # 200 IQ
 Walmart brand *Vim*... Vim *Pseudonym*... *Pseudo-Vim*... **PSEUDOVYM**.  Cheeky, I'm aware.
