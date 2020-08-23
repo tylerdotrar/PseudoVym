@@ -1,13 +1,13 @@
 ﻿function PseudoVym {
 #.SYNOPSIS
 # Rudimentary PowerShell variant of Vim.
-# ARBITRARY VERSION NUMBER:  2.1.4
+# ARBITRARY VERSION NUMBER:  2.1.7
 # AUTHOR:  Tyler McCann (@tyler.rar)
 #
 #.DESCRIPTION
 # Simple script that aims to bring some Vim functionality
-# to PowerShell, since PowerShell does not have a native
-# CLI text editor.
+# to PowerShell, since Windows / PowerShell does not have 
+# a native CLI text editor.
 #
 # Parameters:
 #    -File      -->  (Optional) Input/output file
@@ -17,16 +17,16 @@
 # Special Keys:
 #    Left Alt   -->  Save and Quit
 #    Right Alt  -->  Quit
-#    Control    -->  Developer Console
+#    Ctrl       -->  Open Developer Console
 #
 # Developer Console:
 #    help       -->  List available commands
 #
 # Debug:
-#    Input      -->  Content BEFORE user input
+#    Preface    -->  Content BEFORE user input
 #    Remainder  -->  Content AFTER user input
-#    CharDir    -->  Reverse Character Position
-#    ArrayDir   -->  Active Line
+#    CharIndex  -->  Reverse Character Index
+#    LineIndex  -->  Active Line
 #
 # 'Save as:' Prompts:
 #    back       -->  Exit from prompt
@@ -36,14 +36,21 @@
 
     # Live Visual Formatting of Text
     function Vim-Formatting ([switch]$DevConsole) {
-        # Header formatting
-        Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.1.4)"
-        Write-Host "Filename: " -ForegroundColor Yellow -NoNewline
-        if ($File -and (Test-Path -LiteralPath $PWD\$File)) { 
-            if ($Changes) { Write-Host "$File" -NoNewLine ; Write-Host "*" -ForegroundColor DarkRed }
-            else { Write-Host "$File" }
+        ### Header formatting
+
+        # Version Number
+        Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.1.7)"
+
+        # Output path
+        if ($Debug -or $newPath) {
+            Write-Host "Output Path: " -ForegroundColor Yellow -NoNewline
+            if ($newPath) { Write-Host "$newPath" }
+            else { Write-Host "$PWD" }
         }
-        elseif ($File) {
+
+        # Active Filename
+        Write-Host "Filename: " -ForegroundColor Yellow -NoNewline
+        if ($File) {
             if ($Changes) { Write-Host "$File" -NoNewLine ; Write-Host "*" -ForegroundColor DarkRed }
             else { Write-Host "$File" }
         }
@@ -51,7 +58,6 @@
             if ($Changes) { Write-Host "N/A" -NoNewLine ; Write-Host "*" -ForegroundColor DarkRed }
             else { Write-Host "N/A" }
         }
-        if ($Debug) { Write-Host "Debug: " -ForegroundColor Yellow -Nonewline ; Write-Host "Enabled" }
         Write-Host ""
 
         # Format spacing in front of text (1)
@@ -63,7 +69,7 @@
                 $TempDelim = $Line.Length + $MaxLength
                 if ($TempDelim -gt $DelimLen) { $DelimLen = $TempDelim }
             }
-            $Delim = "=" * $DelimLen
+            $Delim = "-" * $DelimLen
         }
 
         # Iterate for every line
@@ -75,7 +81,8 @@
             # Contents of the iterated line
             $Line = $InputArray[$Index]
 
-            if ($Debug -and $Index -eq 0) { Write-Host "$Delim`n" }
+            # Debug banner
+            if ($Debug -and $Index -eq 0) { Write-Host "Debug Mode:`n$Delim`n" }
 
             # If iterated line is the active line
             if ($Index -eq $ArrayDir) {
@@ -119,16 +126,129 @@
 
         # Useful debug info
         if ($Debug) { 
-            Write-Host "`n$Delim`n"
-            Write-Host "Input      " -ForegroundColor Yellow -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "'$VisualInput'"
-            Write-Host "Remainder  " -ForegroundColor Yellow -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "'$DebugRemainder'"
-            Write-Host "CharDir    " -ForegroundColor Yellow -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "$CharDir"
-            Write-Host "ArrayDir   " -ForegroundColor Yellow -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "$ArrayDir"
+            Write-Host "`n$Delim"
+            Write-Host "Preface    " -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "'$VisualInput'"
+            Write-Host "Remainder  " -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "'$DebugRemainder'"
+            Write-Host "CharIndex  " -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "$CharDir"
+            Write-Host "LineIndex  " -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "$ArrayDir"
         }
         Write-Host ""
 
         # Returned to create a buffer, allowing for left/right arrow key functionality
-        if (!$DevConsole) { return $VisualInput }
+        if (!$DevConsole) { return $VisualInput, $DebugRemainder }
+    }
+
+    # Developer Console
+    function Vim-DevConsole {
+        while ($TRUE) {
+            Write-Host ":" -ForegroundColor Yellow -NoNewline
+
+            # User input
+            $DevOption = Read-Host
+
+            # List available commands
+            if ($DevOption -eq "help") { 
+                Write-Host "  w" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Save"
+                Write-Host "  q" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Quit"
+                Write-Host "  wq" -ForegroundColor Yellow -NoNewLine ; Write-Host "              -->  Save and Quit"
+                Write-Host "  set file=*" -ForegroundColor Yellow -NoNewLine ; Write-Host "      -->  Output Filename"
+                Write-Host "  set path=*" -ForegroundColor Yellow -NoNewline ; Write-Host "      -->  Output Directory"
+                #Write-Host "  set encoding=*" -ForegroundColor Yellow -NoNewline ; Write-Host "  -->  Output Encoding"
+                Write-Host "  cls" -ForegroundColor Yellow -NoNewline ; Write-Host "             -->  Clear Screen"
+                Write-Host "  :" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Exit Developer Console"
+            }
+
+            # Save
+            elseif ($DevOption -eq "w") { 
+                while ($TRUE) {
+                    # Prompt for filename if not already set
+                    if (!$File) { $TempFile = Read-Host "Save as" }
+
+                    # Return to developer console without saving
+                    if ($TempFile -and ($TempFile -eq "back")) { break }
+                    # Error correction
+                    elseif ($TempFile -and ($TempFile -notlike "*.*")) { Write-Host "Invalid input." -ForegroundColor DarkRed }
+                    # Save file
+                    else {
+                        if (!$File) { $File = $TempFile }
+                            
+                        # Set output file path to current directory or user input directory (set path=*)
+                        if (!$newPath) { $FileOut = "$PWD\$File" }
+                        else {
+                            if (!(Test-Path -LiteralPath $newPath)) { New-Item -Path $newPath -ItemType Directory | Out-Null }
+                            $FileOut = "$newPath\$File"
+                        }
+
+                        # Save file, Remove Text Change Visual Indicator, Return to Console
+                        [System.IO.File]::WriteAllLines($FileOut, $InputArray)
+                        Write-Host "File saved." -ForegroundColor DarkGreen
+                        $Changes = $FALSE
+
+                        break
+                    }
+                }
+            }
+
+            # Quit PseudoVym
+            elseif ($DevOption -eq "q") { 
+                Clear-Host
+                return $File, $newPath, $TRUE
+            }
+
+            # Save and Quit
+            elseif ($DevOption -eq "wq") {
+                while ($TRUE) { 
+                    if (!$File) { $TempFile = Read-Host "Save as" }
+
+                    # Return to developer console without saving
+                    if ($TempFile -and ($TempFile -eq "back")) { break }
+                    # Error correction
+                    elseif ($TempFile -and ($TempFile -notlike "*.*")) { Write-Host "Invalid input." -ForegroundColor DarkRed }
+                    # Save file
+                    else {
+                        if (!$File) { $File = $TempFile }
+
+                        # Set output file path to current directory or user input directory (set path=*)
+                        if (!$newPath) { $FileOut = "$PWD\$File" }
+                        else {
+                            if (!(Test-Path -LiteralPath $newPath)) { New-Item -Path $newPath -ItemType Directory | Out-Null }
+                            $FileOut = "$newPath\$File"
+                        }
+
+                        # Save file and Exit PseudoVym
+                        [System.IO.File]::WriteAllLines($FileOut, $InputArray)
+                        Clear-Host
+
+                        return $File, $newPath, $TRUE
+                    }
+                }
+            }
+
+            # Return to text contents
+            elseif ($DevOption -eq ":") { return $File, $newPath, $FALSE }
+
+            # Set output file directory (prefably absolute path)
+            elseif (($DevOption -like "set path=*") -and ($DevOption -notlike "*.*") -and ($DevOption -like "set path=*:\*") -and ($DevOption -notlike "*\")) {
+                $newPath = $DevOption.Replace("set path=",$NULL)
+                Write-Host "Output path saved." -ForegroundColor DarkGreen
+            }
+
+            # Set filename (useful for copying files)
+            elseif (($DevOption -like "set file=*") -and ($DevOption -like "*.*")) {
+                $File = $DevOption.Replace("set file=",$NULL)
+                Write-Host "Filename saved." -ForegroundColor DarkGreen
+            }
+
+
+            # Clear console screen
+            elseif ($DevOption -eq "cls") {
+                Clear-Host
+                Vim-Formatting -DevConsole
+            }
+
+            # Error correction
+            else { Write-Host "Invalid input." -ForegroundColor DarkRed }
+        }
     }
 
     # KeyCodes:
@@ -163,8 +283,14 @@
     if ($Help) { Get-Help PseudoVym ; return }
 
     # Format input filename
-    if ($File -and ($File -notlike "*.txt")) { $File = $File + ".txt" }
     if ($File -and ($File -like ".\*")) { $File = $File.Replace(".\",$NULL) }
+    if ($File -and ($File -notlike "*.*")) { 
+        $TempFile = (Get-ChildItem "$File*").Name
+
+        # Append .txt if file extension not explicitly stated and base filename not found.
+        if (!$TempFile) { $File = $TempFile + ".txt" }
+        else { $File = $TempFile }
+    }
 
     # Load existing file
     if ($File -and (Test-Path -LiteralPath $PWD\$File)) {
@@ -195,6 +321,9 @@
         # Refresh screen every time there is input
         Clear-Host
 
+        # Exit PseudoVym via Developer Console
+        if ($ConsoleExit) { return }
+
         # Initialize input / Update selected line with new input
         if (!$Skip) {
             if (!$InputArray) { $InputArray = @("$Input") }
@@ -202,8 +331,12 @@
         }
         $Skip = $FALSE
 
-        # Call Live Visual Formatting / create input buffer
-        $TempInput = Vim-Formatting
+        # Call Live Visual Formatting / create input and remainder buffers
+        $TempInput, $TempRemainder = Vim-Formatting
+
+        # Create File output path
+        if (!$NewPath -and $File) { $FileOut = "$PWD\$File" }
+        elseif ($NewPath -and $File) { $FileOut = "$newPath\$File" }
 
         # Establish remainder for left/right arrow key functionality
         if ($TempInput -ne $Input) { 
@@ -275,13 +408,18 @@
 
         # Enter (New Line)
         elseif ($Key.VirtualKeyCode -eq '13') {
-            # Save current input to active line
-            $InputArray[$ArrayDir] = $Input
+            # Save current input to active line, set null new line
+            if (!$TempRemainder) {
+                $InputArray[$ArrayDir] = $Input
+                $Input = $NULL 
+            }
+            # Save preface to active line, send remainder to new line
+            else {
+                $InputArray[$ArrayDir] = $TempInput
+                $Input = $TempRemainder 
+            }
 
-
-            $Input = $NULL
             $NewArray = @()
-
             for ($i=0; $i -lt $InputArray.Count; $i++) {
                 # Append non-active lines to new array
                 if ($i -ne $ArrayDir) { $NewArray += $InputArray[$i] }
@@ -305,8 +443,8 @@
         }
 
 
-        ### Relative Char Position via Reverse Char Position:        Position = (Line Length + 1) + Character Position
-        ### New Reverse Char Position via Relative Char Position:    Character Position = Position - (Line Length + 1)
+        ### Relative Char Position via Reverse Char Index:        Position = (Line Length + 1) + Character Index
+        ### New Reverse Char Index via Relative Char Position:    Character Index = Position - (Line Length + 1)
 
         # Note: 
         # This arbitrary formula was created because I used reverse indexes for character positions (e.g., $Line[-1])
@@ -372,17 +510,21 @@
         elseif (($Key.VirtualKeyCode -eq '18') -and ($Key.ControlKeyState -like '*LeftAltPressed*')) {
             # Prompt for filename if not already set
             if (!$File) {
-                Write-Host "`nCurrent Directory: " -ForegroundColor Yellow -NoNewline ; Write-Host $PWD
-                Write-Host "Save as: " -ForegroundColor Yellow -NoNewline ; $File = Read-Host
+                if (!$newPath) { Write-Host "`nCurrent Directory: " -ForegroundColor Yellow -NoNewline ; Write-Host $PWD }
+                Write-Host "Save as: " -ForegroundColor Yellow -NoNewline ; $TempFile = Read-Host
             }
 
             # Return to text page
-            if ($File -eq "back") { $File = $NULL; continue }
-            # Append .txt if not explicitly typed
-            elseif ($File -notlike "*.txt") { $File += ".txt" }
+            if ($TempFile -and ($TempFile -eq "back")) { $TempFile = $NULL; continue }
+            # Append .txt if file extension not explicitly typed
+            elseif ($TempFile -and ($TempFile -notlike "*.*")) { $File = $Tempfile + ".txt" }
 
             # Create absolute path of output file / save file
-            $FileOut = "$PWD\$File"
+            if (!$FileOut) {
+                if (!$newPath) { $FileOut = "$PWD\$File" }
+                else { $FileOut = "$newPath\$File" }
+            }
+
             [System.IO.File]::WriteAllLines($FileOut, $InputArray)
 
             # Clear screen / Imitated Graceful Exit
@@ -412,113 +554,7 @@
         }
         
         # Control (Developer Console)
-        elseif ($Key.VirtualKeyCode -eq "17") {
-            # Developer Console Loop
-            while ($TRUE) {
-                Write-Host ":" -ForegroundColor Yellow -NoNewline
-
-                # User input
-                $DevOption = Read-Host
-
-                # List available commands
-                if ($DevOption -eq "help") { 
-                    Write-Host "  w" -ForegroundColor Yellow -NoNewline ; Write-Host "           -->  Save"
-                    Write-Host "  q" -ForegroundColor Yellow -NoNewline ; Write-Host "           -->  Quit"
-                    Write-Host "  wq" -ForegroundColor Yellow -NoNewLine ; Write-Host "          -->  Save and Quit"
-                    Write-Host "  set file=*" -ForegroundColor Yellow -NoNewLine ; Write-Host "  -->  Output Filename"
-                    Write-Host "  set path=*" -ForegroundColor Yellow -NoNewline ; Write-Host "  -->  Output Directory"
-                    Write-Host "  cls" -ForegroundColor Yellow -NoNewline ; Write-Host "         -->  Clear Screen"
-                    Write-Host "  :" -ForegroundColor Yellow -NoNewline ; Write-Host "           -->  Return to Input"
-                }
-
-                # Save
-                elseif ($DevOption -eq "w") { 
-                    while ($TRUE) {
-                        # Prompt for filename if not already set
-                        if (!$File) { $TempFile = Read-Host "Save as" }
-
-                        # Return to developer console without saving
-                        if ($TempFile -and ($TempFile -eq "back")) { break }
-                        # Error correction
-                        elseif ($TempFile -and ($TempFile -notlike "*.txt")) { Write-Host "Invalid input." -ForegroundColor DarkRed }
-                        # Save file
-                        else {
-                            if (!$File) { $File = $TempFile }
-                            
-                            # Set output file path to current directory or user input directory (set path=*)
-                            if (!$newPath) { $FileOut = "$PWD\$File" }
-                            else {
-                                if (!(Test-Path -LiteralPath $newPath)) { New-Item -Path $newPath -ItemType Directory | Out-Null }
-                                $FileOut = "$newPath\$File"
-                            }
-
-                            # Save file, Remove Text Change Visual Indicator, Return to Console
-                            [System.IO.File]::WriteAllLines($FileOut, $InputArray)
-                            $Changes = $FALSE
-
-                            break
-                        }
-                    }
-                }
-
-                # Quit PseudoVym
-                elseif ($DevOption -eq "q") { 
-                    Clear-Host
-                    return
-                }
-
-                # Save and Quit
-                elseif ($DevOption -eq "wq") {
-                    while ($TRUE) { 
-                        if (!$File) { $TempFile = Read-Host "Save as" }
-
-                        # Return to developer console without saving
-                        if ($TempFile -eq "back") { break }
-                        # Error correction
-                        elseif ($TempFile -notlike "*.txt") { Write-Host "Invalid input." -ForegroundColor DarkRed }
-                        # Save file
-                        else {
-                            if (!$File) { $File = $TempFile }
-
-                            # Set output file path to current directory or user input directory (set path=*)
-                            if (!$newPath) { $FileOut = "$PWD\$File" }
-                            else {
-                                if (!(Test-Path -LiteralPath $newPath)) { New-Item -Path $newPath -ItemType Directory | Out-Null }
-                                $FileOut = "$newPath\$File"
-                            }
-
-                            # Save file and Exit PseudoVym
-                            [System.IO.File]::WriteAllLines($FileOut, $InputArray)
-                            Clear-Host
-
-                            return
-                        }
-                    }
-                }
-
-                # Return to text contents
-                elseif ($DevOption -eq ":") { break }
-
-                # Set output file directory (prefably absolute path)
-                elseif (($DevOption -like "set path=*") -and ($DevOption -notlike "*.txt")) {
-                    $newPath = $DevOption.Replace("set path=",$NULL)
-                }
-
-                # Set filename (useful for copying files)
-                elseif (($DevOption -like "set file=*") -and ($DevOption -like "*.txt")) {
-                    $File = $DevOption.Replace("set file=",$NULL)
-                }
-
-                # Clear console screen
-                elseif ($DevOption -eq "cls") {
-                    Clear-Host
-                    Vim-Formatting -DevConsole
-                }
-
-                # Error correction
-                else { Write-Host "Invalid input." -ForegroundColor DarkRed }
-            }
-        }
+        elseif ($Key.VirtualKeyCode -eq "17") { $File, $NewPath, $ConsoleExit = Vim-DevConsole }
 
         # Special Keys to Ignore
         elseif ($Stinky -contains $Key.VirtualKeyCode) { $Skip = $TRUE }
