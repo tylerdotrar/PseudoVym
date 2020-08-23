@@ -18,6 +18,7 @@
 #    Left Alt   -->  Save and Quit
 #    Right Alt  -->  Quit
 #    Ctrl       -->  Open Developer Console
+#    Delete     -->  Remove entire Active Line
 #
 # Developer Console:
 #    help       -->  List available commands
