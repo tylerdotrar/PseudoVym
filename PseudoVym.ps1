@@ -1,12 +1,12 @@
 ﻿function PseudoVym {
 #.SYNOPSIS
 # Rudimentary PowerShell variant of Vim.
-# ARBITRARY VERSION NUMBER:  2.2.0
+# ARBITRARY VERSION NUMBER:  2.2.3
 # AUTHOR:  Tyler McCann (@tyler.rar)
 #
 #.DESCRIPTION
 # Simple script that aims to bring some Vim functionality
-# to PowerShell, since Windows / PowerShell does not have 
+# to PowerShell, since Windows / PowerShell does not have
 # a native CLI text editor.
 #
 # Parameters:
@@ -45,7 +45,7 @@
             ### Header formatting
 
             # Version Number
-            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.2.0)"
+            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.2.3)"
 
             # Output path
             if ($Debug -or $newPath) {
@@ -71,7 +71,7 @@
 
             # Calculate debug delimiter line length using longest line of text
             if ($Debug) {
-                foreach ($Line in $InputArray) { 
+                foreach ($Line in $InputArray) {
                     $TempDelim = $Line.Length + $MaxLength
                     if ($TempDelim -gt $DelimLen) { $DelimLen = $TempDelim }
                 }
@@ -95,7 +95,7 @@
                     $VisualInput = $NULL
                     $Remainder = $NULL
                     Write-Host "$Index$Space" -ForegroundColor DarkRed -NoNewline
-                
+
                     # Formatting for non-empty lines
                     if ($Line.Length -ge 1) {
                         # Input mark
@@ -105,7 +105,7 @@
                         for ($Char = (-$Line.Length); $Char -le $CharDir; $Char++) { $VisualInput += $Line[$Char] }
 
                         # Input mark is NOT at the end of the line
-                        if ($CharDir -ne -1) { 
+                        if ($CharDir -ne -1) {
                             # Remainder AFTER input mark
                             for ($Char = ($CharDir + 1); $Char -le -1; $Char++) {
                                 if ($Char -ne -1) { $Remainder += $Line[$Char + 1] }
@@ -116,13 +116,13 @@
                         }
 
                         # Input mark IS at the end of the line
-                        else { 
+                        else {
                             $VisualInput = $Line
                             Write-Host $VisualInput -NoNewline ; Write-Host " " -ForegroundColor Black -BackgroundColor White
                         }
                     }
 
-                    # Formatting for empty lines 
+                    # Formatting for empty lines
                     else { Write-Host " " -ForegroundColor Black -BackgroundColor White }
                 }
 
@@ -131,7 +131,7 @@
             }
 
             # Useful debug info
-            if ($Debug) { 
+            if ($Debug) {
                 Write-Host "`n$Delim"
                 Write-Host "Preface    " -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "'$VisualInput'"
                 Write-Host "Remainder  " -NoNewline ; Write-Host "-->  " -ForegroundColor DarkRed -NoNewline ; Write-Host "'$DebugRemainder'"
@@ -157,31 +157,37 @@
             $DevOption = Read-Host
 
             # List available commands
-            if ($DevOption -eq "help") { 
+            if ($DevOption -eq "help") {
                 Write-Host "  w" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Save"
                 Write-Host "  q" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Quit"
                 Write-Host "  wq" -ForegroundColor Yellow -NoNewLine ; Write-Host "              -->  Save and Quit"
                 Write-Host "  set file=*" -ForegroundColor Yellow -NoNewLine ; Write-Host "      -->  Output Filename"
                 Write-Host "  set path=*" -ForegroundColor Yellow -NoNewline ; Write-Host "      -->  Output Directory"
                 #Write-Host "  set encoding=*" -ForegroundColor Yellow -NoNewline ; Write-Host "  -->  Output Encoding"
+                Write-Host "  dbg" -ForegroundColor Yellow -NoNewLine ; Write-Host "             -->  Toggle Debugger"
                 Write-Host "  cls" -ForegroundColor Yellow -NoNewline ; Write-Host "             -->  Clear Screen"
                 Write-Host "  :" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Exit Developer Console"
             }
 
             # Save
-            elseif ($DevOption -eq "w") { 
+            elseif ($DevOption -eq "w") {
                 while ($TRUE) {
                     # Prompt for filename if not already set
                     if (!$File) { $TempFile = Read-Host "Save as" }
 
-                    # Return to developer console without saving
-                    if ($TempFile -and ($TempFile -eq "back")) { break }
-                    # Error correction
-                    elseif ($TempFile -and ($TempFile -notlike "*.*")) { Write-Host "Invalid input." -ForegroundColor DarkRed }
+                    if ($TempFile) {
+                        # Return to developer console without saving
+                        if ($TempFile -eq "back") { break }
+
+                        # Error correction
+                        elseif ($TempFile -notlike "*.*") { Write-Host "Invalid input." -ForegroundColor DarkRed }
+
+                        else { $File = $TempFile ; $TempFile = $NULL }
+                    }
+
                     # Save file
                     else {
-                        if (!$File) { $File = $TempFile }
-                            
+
                         # Set output file path to current directory or user input directory (set path=*)
                         if (!$newPath) { $FileOut = "$PWD\$File" }
                         else {
@@ -191,32 +197,35 @@
 
                         # Save file, Remove Text Change Visual Indicator, Return to Console
                         [System.IO.File]::WriteAllLines($FileOut, $InputArray)
+
                         Write-Host "File saved." -ForegroundColor DarkGreen
                         $Changes = $FALSE
-
                         break
                     }
                 }
             }
 
             # Quit PseudoVym
-            elseif ($DevOption -eq "q") { 
-                Clear-Host
-                return $File, $newPath, $TRUE
-            }
+            elseif ($DevOption -eq "q") { Clear-Host ; return $File, $newPath, $Changes, $Debug, $TRUE }
 
             # Save and Quit
             elseif ($DevOption -eq "wq") {
-                while ($TRUE) { 
+                while ($TRUE) {
+                    # Prompt for filename if not already set
                     if (!$File) { $TempFile = Read-Host "Save as" }
 
-                    # Return to developer console without saving
-                    if ($TempFile -and ($TempFile -eq "back")) { break }
-                    # Error correction
-                    elseif ($TempFile -and ($TempFile -notlike "*.*")) { Write-Host "Invalid input." -ForegroundColor DarkRed }
+                    if ($TempFile) {
+                        # Return to developer console without saving
+                        if ($TempFile -eq "back") { break }
+
+                        # Error correction
+                        elseif ($TempFile -notlike "*.*") { Write-Host "Invalid input." -ForegroundColor DarkRed }
+
+                        else { $File = $TempFile ; $TempFile = $NULL }
+                    }
+
                     # Save file
                     else {
-                        if (!$File) { $File = $TempFile }
 
                         # Set output file path to current directory or user input directory (set path=*)
                         if (!$newPath) { $FileOut = "$PWD\$File" }
@@ -227,15 +236,15 @@
 
                         # Save file and Exit PseudoVym
                         [System.IO.File]::WriteAllLines($FileOut, $InputArray)
-                        Clear-Host
 
-                        return $File, $newPath, $TRUE
+                        Clear-Host
+                        return $File, $newPath, $Changes, $Debug, $TRUE
                     }
                 }
             }
 
             # Return to text contents
-            elseif ($DevOption -eq ":") { return $File, $newPath, $FALSE }
+            elseif ($DevOption -eq ":") { return $File, $newPath, $Changes, $Debug, $FALSE }
 
             # Set output file directory (prefably absolute path)
             elseif (($DevOption -like "set path=*") -and ($DevOption -notlike "*.*") -and ($DevOption -like "set path=*:\*") -and ($DevOption -notlike "*\")) {
@@ -249,6 +258,13 @@
                 Write-Host "Filename saved." -ForegroundColor DarkGreen
             }
 
+            # Toggle Debugger
+            elseif ($DevOption -eq "dbg") { 
+                $Debug = !$Debug
+
+                if ($Debug) { Write-Host "Debugger enabled." -ForegroundColor DarkGreen }
+                else { Write-Host "Debugger disabled." -ForegroundColor DarkRed }
+            }
 
             # Clear console screen
             elseif ($DevOption -eq "cls") {
@@ -283,19 +299,21 @@
     $FuncKeys    = 112..123
 
     # VirtualKeyCodes to be Ignored
-    $Stinky = $Shift, $Escape, $Insert, $PageUp, $PageDown, $End, $HomeKey, $FuncKeys
+    $Stinky = $Shift, $CapsLock, $Escape, $PageUp, $PageDown, $End, $HomeKey, $Insert, $FuncKeys
 
     # Return help info
     if ($Help) { Get-Help PseudoVym ; return }
 
     # Format input filename
-    if ($File -and ($File -like ".\*")) { $File = $File.Replace(".\",$NULL) }
-    if ($File -and ($File -notlike "*.*")) { 
-        $TempFile = (Get-ChildItem "$File*").Name
+    if ($File) {
+        if ($File -like ".\*") { $File = $File.Replace(".\",$NULL) }
+        if ($File -notlike "*.*") {
+            $TempFile = (Get-ChildItem "$File*").Name
 
-        # Append .txt if file extension not explicitly stated and base filename not found.
-        if (!$TempFile) { $File = $File + ".txt" }
-        else { $File = $TempFile }
+            # Append .txt if file extension not explicitly stated and base filename not found.
+            if (!$TempFile) { $File = $File + ".txt" }
+            else { $File = $TempFile }
+        }
     }
 
     # Load existing file
@@ -344,14 +362,16 @@
         $Refresh = $TRUE
 
         # Create File output path
-        if (!$NewPath -and $File) { $FileOut = "$PWD\$File" }
-        elseif ($NewPath -and $File) { $FileOut = "$newPath\$File" }
+        if ($File) {
+            if (!$NewPath) { $FileOut = "$PWD\$File" }
+            else { $FileOut = "$newPath\$File" }
+        }
 
         # Establish remainder for left/right arrow key functionality
-        if ($TempInput -ne $Input) { 
+        if ($TempInput -ne $Input) {
             if ($Input.Length -gt 1) { $Remainder = $Input.Replace($TempInput,$NULL) }
             else { $Remainder = $Input }
-            $UseTemp = $TRUE 
+            $UseTemp = $TRUE
         }
         # No remainder required
         else { $UseTemp = $FALSE }
@@ -360,21 +380,26 @@
         $Key = $Host.UI.RawUI.ReadKey()
 
         switch ($Key.VirtualKeyCode) {
-            
+
             # Remove Character
             $Backspace
                 {
-                    # Remove last character of line (if input mark at end of line)
-                    if ($Input -and ($Input.Length -gt 1) -and (!$UseTemp)) { $Input = $Input.Substring(0,$Input.Length - 1) }
+                    if ($Input) {
+                        if ($Input.Length -gt 1) {
 
-                    # Remove last character of input buffer (if input mark NOT at end of line)
-                    elseif ($Input -and ($Input.Length -gt 1) -and ($UseTemp)) { 
-                        $TempInput = $TempInput.Substring(0,$TempInput.Length - 1)
-                        $Input = $TempInput + $Remainder
+                            # Remove last character of line (if input mark at end of line)
+                            if (!$UseTemp) { $Input = $Input.Substring(0,$Input.Length - 1) }
+
+                            # Remove last character of input buffer (if input mark NOT at end of line)
+                            else {
+                                $TempInput = $TempInput.Substring(0,$TempInput.Length - 1)
+                                $Input = $TempInput + $Remainder
+                            }
+                        }
+
+                        # Remove last character of line (if 1 character in line)
+                        elseif ($Input.Length -eq 1) { $Input = $NULL }
                     }
-
-                    # Remove last character of line (if 1 character in line)
-                    elseif ($Input -and ($Input.Length -eq 1)) { $Input = $NULL }
 
                     # Remove entire line / create new array from text contents (if 0 characters in line)
                     else {
@@ -402,13 +427,13 @@
                     # Text Changes Visual Indicator
                     $Changes = $TRUE
                 }
-            
+
 
             # Remove Line
             $Delete
                 {
                     # Fix temporary null input if first line is removed
-                    if ($InputArray.Count -eq 1) { 
+                    if ($InputArray.Count -eq 1) {
                         # Text Changes Visual Indicator
                         $Changes = $TRUE
                         $Input = $NULL
@@ -437,16 +462,16 @@
 
             # New Line
             $Enter
-                { 
+                {
                     # Save current input to active line, set null new line
                     if (!$TempRemainder) {
                         $InputArray[$ArrayDir] = $Input
-                        $Input = $NULL 
+                        $Input = $NULL
                     }
                     # Save preface to active line, send remainder to new line
                     else {
                         $InputArray[$ArrayDir] = $TempInput
-                        $Input = $TempRemainder 
+                        $Input = $TempRemainder
                     }
 
                     $NewArray = @()
@@ -457,7 +482,7 @@
                         # Append empty input line to new array
                         else {
                             $NewArray += $InputArray[$i]
-                            $NewArray += $Input 
+                            $NewArray += $Input
                         }
                     }
 
@@ -473,18 +498,20 @@
                 }
 
 
-            ### Relative Char Position via Reverse Char Index:        Position = (Line Length + 1) + Character Index
-            ### New Reverse Char Index via Relative Char Position:    Character Index = Position - (Line Length + 1)
+            <#
+            ++ Relative Char Position via Reverse Char Index:        Position = (Line Length + 1) + Character Index
+            ++ Reverse Char Index via Relative Char Position:        Character Index = Position - (Line Length + 1)
 
-            # Note: 
-            # This arbitrary formula was created because I used reverse indexes for character positions (e.g., $Line[-1])
-            # and needed a mathematical way to determine index depth despite varying line lengths in order to get the 
-            # left and right arrow key functionality to work properly.
+            Note:
+            This arbitrary formula was created because I used reverse indexes for character positions (e.g., $Line[-1])
+            and needed a mathematical way to determine index depth despite varying line lengths in order to get the
+            left and right arrow key functionality to work properly.
+            #>
 
 
             # Change Active Line (Up)
             $ArrowUp
-                { 
+                {
                     # Establish current relative character position
                     $Position = ($InputArray[$ArrayDir].Length + 1) + $CharDir
 
@@ -500,10 +527,10 @@
                     $Input = $InputArray[$ArrayDir]
                 }
 
-            
+
             # Change Active Line (Down)
             $ArrowDown
-                { 
+                {
                     # Establish current relative character position
                     $Position = ($InputArray[$ArrayDir].Length + 1) + $CharDir
 
@@ -533,7 +560,7 @@
 
             # Change Active Character (Right)
             $ArrowRight
-                { 
+                {
                     $ActiveLine = $InputArray[$ArrayDir]
 
                     # Increment Reverse Character Position / Loop to Beginning of Line
@@ -544,19 +571,28 @@
 
             # Save and/or Quit
             $Alt
-                { 
+                {
                     # Save and Quit
                     if ($Key.ControlKeyState -like '*LeftAltPressed*') {
+
                         # Prompt for filename if not already set
                         if (!$File) {
                             if (!$newPath) { Write-Host "`nCurrent Directory: " -ForegroundColor Yellow -NoNewline ; Write-Host $PWD }
                             Write-Host "Save as: " -ForegroundColor Yellow -NoNewline ; $TempFile = Read-Host
                         }
 
-                        # Return to text page
-                        if ($TempFile -and ($TempFile -eq "back")) { $TempFile = $NULL; continue }
-                        # Append .txt if file extension not explicitly typed
-                        elseif ($TempFile -and ($TempFile -notlike "*.*")) { $File = $Tempfile + ".txt" }
+                        if ($TempFile) {
+                            # Return to text page
+                            if ($TempFile -eq "back") { $TempFile = $NULL; continue }
+
+                            else {
+                                # Append .txt if file extension not explicitly typed
+                                if ($TempFile -notlike "*.*") { $File = $Tempfile + ".txt" }
+                                else { $File = $TempFile }
+
+                                $TempFile = $NULL
+                            }
+                        }
 
                         # Create absolute path of output file / save file
                         if (!$FileOut) {
@@ -579,7 +615,8 @@
                     }
 
                     # Quit
-                    elseif (($Key.VirtualKeyCode -eq $Alt) -and ($Key.ControlKeyState -like '*RightAltPressed*')) {
+                    elseif ($Key.ControlKeyState -like '*RightAltPressed*') {
+
                         # Clear screen / Imitated Graceful Exit
                         Clear-Host
                         Write-Host "PS $PWD> vim $File"
@@ -589,18 +626,18 @@
                         else { Write-Host "Exited PseudoVym." -ForegroundColor Yellow }
 
                         # Exit PseudoVym
-                        return 
+                        return
                     }
                 }
-            
+
 
             # Developer Console
             $Ctrl
-                { 
-                    $File, $NewPath, $ConsoleExit = Vim-DevConsole
+                {
+                    $File, $NewPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole
                 }
 
-            
+
             # Valid / Invalid Keys
             Default
                 {
@@ -616,7 +653,7 @@
                         if (!$UseTemp) { $Input += $Key.Character }
 
                         # Append character to input buffer
-                        else { 
+                        else {
                             $TempInput += $Key.Character
                             $Input = $TempInput + $Remainder
                         }
