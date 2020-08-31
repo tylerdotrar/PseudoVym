@@ -15,21 +15,21 @@ functionality to others based on their **VirtualKeyCodes**.
 
 **Key Functionality:**
 
-   *[] Left Alt   --  Save and Quit (prompt for filename if one isn't set)*
+   *[] **Left Alt**   --  Save and Quit (prompt for filename if one isn't set)*
 
-   *[] Right Alt  --  Quit without Saving*
+   *[] **Right Alt**  --  Quit without Saving*
 
-   *[] Ctrl       --  Open Vim styled "Developer Console"*
+   *[] **Ctrl**       --  Open Vim styled "Developer Console"*
    
-   *[] Delete     --  Remove entire Active Line*
+   *[] **Delete**     --  Remove entire Active Line*
    
-   *[] PageUp     --  Jump to First Line*
+   *[] **PageUp**     --  Jump to First Line*
    
-   *[] PageDown   --  Jump to Last Line*
+   *[] **PageDown**   --  Jump to Last Line*
    
-   *[] Enter      --  Create new line after Active Line (and move remaining text)*
+   *[] **Enter**      --  Create new line after Active Line (and move remaining text)*
    
-   *[] ArrowKeys  --  Change Active Line and Character Placement*
+   *[] **ArrowKeys**  --  Change Active Line and Character Placement*
 
 The function name is "**PseudoVym**" however there's a built in alias called "**vim**".
 
@@ -42,21 +42,21 @@ When in the Developer Console, type "help" to display a list available commands.
 
 **Available Commands:**
 
-   *[] w          --  Save File (prompt for filename if one isn't set)*
+   *[] **w**         --  Save File (prompt for filename if one isn't set)*
    
-   *[] q          --  Quit PseudoVym without Saving*
+   *[] **q**          --  Quit PseudoVym without Saving*
    
-   *[] wq         --  Save and Quit PseudoVym*
+   *[] **wq**         --  Save and Quit PseudoVym*
    
-   *[] set file=  --  Set / Change Output Filename (Requires file extension; Syntax: 'set file=TestName.txt')*
+   *[] **set file=**  --  Set / Change Output Filename (Requires file extension; **Syntax:** 'set file=TestName.txt')*
    
-   *[] set path=  --  Set / Change Output Path (Requires absolute path; NO file; Syntax: 'set path=C:\Users\Bobby\Documents')*
+   *[] **set path=**  --  Set / Change Output Path (Requires absolute path; NO file; **Syntax:** 'set path=C:\Users\Bobby\Documents')*
    
-   *[] dbg        --  Toggle Debugger*
+   *[] **dbg**        --  Toggle Debugger*
    
-   *[] cls        --  Clear Console Output*
+   *[] **cls**        --  Clear Console Output*
    
-   *[] :          --  Exit Developer Console*
+   *[] **:**          --  Exit Developer Console*
    
 # Notes
 Recommended usage is copy and pasting script contents into your **$PROFILE**.
