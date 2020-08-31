@@ -9,6 +9,12 @@ download third party applications for this functionality -- but I figured it wou
 a relatively fun and easy project to do via PowerShell.
 
 # Code / Functionality
+The function name is "**PseudoVym**" however there's a built in alias called "**vim**".
+
+Use **Get-Help** or the **-Help** switch for more info.
+
+Use the **-Debug** switch for live verbose input and placement information.
+
 Essentially, this is a large function with a perpetual WHILE loop prompting for key input 
 from the user using **$Host.UI.RawUI.ReadKey** -- then ignoring specific keys and adding special
 functionality to others based on their **VirtualKeyCodes**.
@@ -31,11 +37,9 @@ functionality to others based on their **VirtualKeyCodes**.
    
    *[] **ArrowKeys**  --  Change Active Line and Character Placement*
 
-The function name is "**PseudoVym**" however there's a built in alias called "**vim**".
-
-Use **Get-Help** or the **-Help** switch for more info.
-
-Use the **-Debug** switch for live verbose input and placement information.
+When inputting a filename, all extensions are supported.  When no file extension is input,
+PseudoVym will search the PWD for a file with a matching base name to open; if no match
+is found, then the file extension will default to **.txt** and input will be NULL.
 
 # Developer Console
 When in the Developer Console, type "help" to display a list available commands.
