@@ -1,44 +1,58 @@
 ﻿function PseudoVym {
 #.SYNOPSIS
 # Rudimentary PowerShell variant of Vim.
-# ARBITRARY VERSION NUMBER:  2.3.1
+# ARBITRARY VERSION NUMBER:  2.4.3
 # AUTHOR:  Tyler McCann (@tyler.rar)
 #
 #.DESCRIPTION
-# Simple script that aims to bring some Vim functionality
-# to PowerShell, since Windows / PowerShell does not have
-# a native CLI text editor.
+# Simple script that aims to bring some Vim functionality to PowerShell, since Windows / PowerShell does
+# not have a native CLI text editor. If a filename is input without a file extension, '.txt' will be
+# appended to the file (with the Developer Console being an exception; a file extension must be input in
+# the console).  File contents will be adjusted accordingly with current terminal window height.
+#
+# Supports alternate data streams (ADS).
+#
+# Recommendations:
+# -- Use 'Vim.psm1' (and included instructions) from the repo to load this script from your $PROFILE.
 #
 # Parameters:
-#    -File       -->  (Optional) Input/output file
-#    -Help       -->  (Optional) Return Get-Help info
-#    -Debug      -->  (Optional) Display position and input info
+#    -File          -->    (Optional) Input/output file
+#    -Debug         -->    (Optional) Display position and input info
+#    -Help          -->    (Optional) Return Get-Help info
 #
 # Special Keys:
-#    Left Alt    -->  Save and Quit
-#    Right Alt   -->  Quit
-#    Ctrl        -->  Open Developer Console
-#    Delete      -->  Remove entire Active Line
-#    PageUp      -->  Jump to First Line
-#    PageDown    -->  Jump to Last Line
+#    Left Alt       -->    Save and Quit
+#    Right Alt      -->    Quit
+#    Ctrl           -->    Open Developer Console
+#    Delete         -->    Remove entire Active Line
+#    PageUp         -->    Jump to First Line
+#    PageDown       -->    Jump to Last Line
 #
 # Developer Console:
-#    help        -->  List available commands
+#    help           -->    List available commands
 #
-# Debug:
-#    Preface     -->  Content BEFORE User Input
-#    Remainder   -->  Content AFTER User Input
-#    CharIndex   -->  Reverse Character Index
-#    LineIndex   -->  Active Line
-#    OutputSize  -->  Number of Lines Printed
-#    WindowSize  -->  Maximum Number of Lines
-#    ExecTime    -->  Execution Time in Milliseconds
+# Debug Mode:
+#    Preface        -->    Content BEFORE User Input
+#    Remainder      -->    Content AFTER User Input
+#    CharIndex      -->    Reverse Character Index
+#    LineIndex      -->    Active Line
+#    OutputSize     -->    Number of Lines Printed
+#    WindowSize     -->    Maximum Number of Lines
+#    ExecTime       -->    Execution Time in Milliseconds
 #
 # "Save as:" Prompts:
-#    back        -->  Exit from prompt
+#    back           -->    Exit from prompt
+#
+#.LINK
+# https://github.com/tylerdotrar/PseudoVym
 
     [Alias('vim')]
-    Param ( [string]$File, [switch]$Help, [switch]$Debug )
+
+    Param (
+        [string] $File,
+        [switch] $Help,
+        [switch] $Debug
+    )
 
     # Live Visual Formatting of Text
     function Vim-Formatting ([switch]$DevConsole) {
@@ -124,25 +138,29 @@
             ### Header formatting
 
             # Version Number
-            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.3.1)"
+            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.4.1)"
 
             # Output path
             if ($Debug -or $CustomPath) {
                 Write-Host "Output Path: " -ForegroundColor Yellow -NoNewline
+
                 if ($CustomPath) { Write-Host "$CustomPath" }
                 else { Write-Host "$PWD" }
             }
 
             # Active Filename
             Write-Host "Filename: " -ForegroundColor Yellow -NoNewline
+
             if ($File) {
                 if ($Changes) { Write-Host "$File" -NoNewLine ; Write-Host "*" -ForegroundColor Red }
                 else { Write-Host "$File" }
             }
+
             else {
                 if ($Changes) { Write-Host "N/A" -NoNewLine ; Write-Host "*" -ForegroundColor Red }
                 else { Write-Host "N/A" }
             }
+
             Write-Host ""
 
             # Format spacing in front of text (1)
@@ -150,6 +168,7 @@
 
             # Calculate debug delimiter line length using longest line of text
             if ($Debug) {
+
                 foreach ($Line in $InputArray) {
                     $TempDelim = $Line.Length + $MaxLength
                     if ($TempDelim -gt $DelimLen) { $DelimLen = $TempDelim }
@@ -159,6 +178,7 @@
 
             # Print every line of text
             if ($TotalHeight -le $MaxTerminalHeight) {
+
                 for ($IndexLine = 0; $IndexLine -lt $InputArray.Count; $IndexLine++) {
                     $VisualInput, $DebugRemainder = Line-Printing -FirstLine 0
                     $VisualLimits = @()
@@ -227,6 +247,7 @@
     function Vim-DevConsole {
         
         function Terminal-Printing ([string]$Command) {
+
             if ($Command -eq "[Redacted]") { Write-Host $Command -ForegroundColor Yellow }
             elseif ($GreenOutput -contains $Command) { Write-Host $Command -ForegroundColor Green }
             elseif ($RedOutput -contains $Command) { Write-Host $Command -ForegroundColor Red }
@@ -272,7 +293,6 @@
                 Write-Host "  wq" -ForegroundColor Yellow -NoNewLine ; Write-Host "              -->  Save and Quit"
                 Write-Host "  set file=*" -ForegroundColor Yellow -NoNewLine ; Write-Host "      -->  Output Filename"
                 Write-Host "  set path=*" -ForegroundColor Yellow -NoNewline ; Write-Host "      -->  Output Directory"
-                #Write-Host "  set encoding=*" -ForegroundColor Yellow -NoNewline ; Write-Host "  -->  Output Encoding"
                 Write-Host "  dbg" -ForegroundColor Yellow -NoNewLine ; Write-Host "             -->  Toggle Debugger"
                 Write-Host "  cls" -ForegroundColor Yellow -NoNewline ; Write-Host "             -->  Clear Screen"
                 Write-Host "  :" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Exit Developer Console"
@@ -393,15 +413,17 @@
 
             # Set output file directory (prefably absolute path)
             elseif (($DevOption -like "set path=*") -and ($DevOption -notlike "*.*") -and ($DevOption -like "set path=*:\*") -and ($DevOption -notlike "*\")) {
-                $CustomPath = $DevOption.Replace("set path=",$NULL)
 
+                $TempPath = $DevOption.Replace("set path=",$NULL)
+
+                if ($TempPath -ne $PWD) { $CustomPath = $TempPath }
                 $TerminalOutput += "Output path saved."
             }
 
             # Set filename (useful for copying files)
             elseif (($DevOption -like "set file=*") -and ($DevOption -like "*.*")) {
-                $File = $DevOption.Replace("set file=",$NULL)
 
+                $File = $DevOption.Replace("set file=",$NULL)
                 $TerminalOutput += "Filename saved."
             }
 
@@ -503,27 +525,37 @@
     $Stinky = $Shift, $CapsLock, $Escape, $EndKey, $HomeKey, $Insert, $FuncKeys
 
     # Return help info
-    if ($Help) { Get-Help PseudoVym ; return }
+    if ($Help) { return Get-Help PseudoVym }
 
-    # Format input filename
-    if ($File) {
-        if ($File -like ".\*") { $File = $File.Replace(".\",$NULL) }
-        if ($File -notlike "*.*") {
-            $TempFile = (Get-ChildItem "$File*").Name
+    # Load and format existing file
+    if ($File -and (Test-Path -LiteralPath $File 2>$NULL)) {
+        
+        # ADS Support (Part 1)
+        if ((Get-Item -LiteralPath $File).PSChildName -like "*:*") {
 
-            # Append .txt if file extension not explicitly stated and base filename not found.
-            if (!$TempFile) { $File = $File + ".txt" }
-            else { $File = $TempFile }
+            $ADSfile = ((Get-Item -LiteralPath $File).PSChildName -split ':')[0]
+            $ADSPath = (Get-Item -LiteralPath $File).FileName -replace "$ADSfile","$NULL"
+            $ParentPath = $ADSPath.Substring(0,$ADSPath.Length - 1)
         }
-    }
 
-    # Load existing file
-    if ($File -and (Test-Path -LiteralPath $PWD\$File)) {
+        # Normal file
+        else {
+
+            $FullPath = (Get-Item $File).FullName
+            $ParentPath = Split-Path $FullPath -Parent
+        }
+
+        $File = Split-Path $File -Leaf
+        if ($ParentPath -ne $PWD) { $CustomPath = $ParentPath }
+        
+        # ADS Support (Part 2)
+        $BigFile = "$ParentPath\$File"
+
         $Skip = $TRUE
         $InputArray = @()
         $LineCount = 0
 
-        foreach ($Line in (Get-Content -LiteralPath $PWD\$File)) {
+        foreach ($Line in (Get-Content -LiteralPath $BigFile)) {
             $InputArray += $Line
             $LineCount++
         }
@@ -535,12 +567,20 @@
 
     # Start new file
     else {
-        if ($File) { $Changes = $TRUE }
+
+        if ($File) {
+            
+            # Append .txt if file extension not explicitly stated.
+            if ($File -like ".\*") { $File = $File.Replace(".\",$NULL) }
+            if ($File -notlike "*.*") { $File = $File + ".txt" }
+            $Changes = $TRUE
+        }
 
         $Input = $NULL
         $ArrayDir = 0
         $CharDir = -1
     }
+    
 
     # Start MAIN
     $Refresh = $TRUE
@@ -571,10 +611,12 @@
 
         # Establish remainder for left/right arrow key functionality
         if ($TempInput -ne $Input) {
+
             if ($Input.Length -gt 1) { $Remainder = $Input.Replace($TempInput,$NULL) }
             else { $Remainder = $Input }
             $UseTemp = $TRUE
         }
+
         # No remainder required
         else { $UseTemp = $FALSE }
 
@@ -787,7 +829,9 @@
 
                         # Clear screen / Imitated Graceful Exit
                         Clear-Host
-                        Write-Host "PS $PWD> vim $File"
+                        if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
+                        elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
+                        else { Write-Host "PS $PWD> vim" }
 
                         # Verify File Creation
                         if (Test-Path -LiteralPath $FileOut) { Write-Host "File successfully saved." -ForegroundColor Green }
@@ -802,10 +846,12 @@
 
                         # Clear screen / Imitated Graceful Exit
                         Clear-Host
-                        Write-Host "PS $PWD> vim $File"
+                        if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
+                        elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
+                        else { Write-Host "PS $PWD> vim" }
 
                         # Display if exited without saving changes or no changes needed to be saved
-                        if ($Changes) { Write-Host "Exited without saving." -ForegroundColor Yellow }
+                        if ($Changes) { Write-Host "Exited PseudoVym without saving." -ForegroundColor Yellow }
                         else { Write-Host "Exited PseudoVym." -ForegroundColor Yellow }
 
                         # Exit PseudoVym
