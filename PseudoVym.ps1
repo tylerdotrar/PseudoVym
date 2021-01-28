@@ -1,7 +1,7 @@
 ﻿function PseudoVym {
 #.SYNOPSIS
 # Rudimentary PowerShell variant of Vim.
-# ARBITRARY VERSION NUMBER:  2.4.3
+# ARBITRARY VERSION NUMBER:  2.7.9
 # AUTHOR:  Tyler McCann (@tyler.rar)
 #
 #.DESCRIPTION
@@ -10,7 +10,7 @@
 # appended to the file (with the Developer Console being an exception; a file extension must be input in
 # the console).  File contents will be adjusted accordingly with current terminal window height.
 #
-# Supports alternate data streams (ADS).
+# Supports alternate data streams (ADS) and secure shell (SSH).
 #
 # Recommendations:
 # -- Use 'Vim.psm1' (and included instructions) from the repo to load this script from your $PROFILE.
@@ -21,24 +21,26 @@
 #    -Help          -->    (Optional) Return Get-Help info
 #
 # Special Keys:
-#    Left Alt       -->    Save and Quit
-#    Right Alt      -->    Quit
-#    Ctrl           -->    Open Developer Console
-#    Delete         -->    Remove entire Active Line
-#    PageUp         -->    Jump to First Line
-#    PageDown       -->    Jump to Last Line
+#    LCtrl          -->    Save and quit  (Not SSH Compatible)
+#    RCtrl          -->    Quit           (Not SSH Compatible)
+#    F1             -->    Save and quit
+#    F2             -->    Quit
+#    F3             -->    Developer console
+#    Delete         -->    Remove entire line
+#    PageUp         -->    Jump to first line
+#    PageDown       -->    Jump to last line
 #
 # Developer Console:
 #    help           -->    List available commands
 #
 # Debug Mode:
-#    Preface        -->    Content BEFORE User Input
-#    Remainder      -->    Content AFTER User Input
-#    CharIndex      -->    Reverse Character Index
-#    LineIndex      -->    Active Line
-#    OutputSize     -->    Number of Lines Printed
-#    WindowSize     -->    Maximum Number of Lines
-#    ExecTime       -->    Execution Time in Milliseconds
+#    Preface        -->    Content BEFORE user input
+#    Remainder      -->    Content AFTER user input
+#    CharIndex      -->    Reverse character index
+#    LineIndex      -->    Currently active line
+#    OutputSize     -->    Number of lines currently printed
+#    WindowSize     -->    Maximum number of lines in window
+#    ExecTime       -->    Execution time in milliseconds
 #
 # "Save as:" Prompts:
 #    back           -->    Exit from prompt
@@ -138,7 +140,7 @@
             ### Header formatting
 
             # Version Number
-            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.4.1)"
+            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.7.9)"
 
             # Output path
             if ($Debug -or $CustomPath) {
@@ -340,13 +342,16 @@
                         # Set output file path to current directory or user input directory (set path=*)
                         if (!$CustomPath) { $FileOut = "$PWD\$File" }
                         else {
-                            if (!(Test-Path -LiteralPath $CustomPath)) { New-Item -Path $CustomPath -ItemType Directory | Out-Null }
+                            if (!(Test-Path -LiteralPath $CustomPath 2>$NULL)) { New-Item -Path $CustomPath -ItemType Directory | Out-Null }
 
                             $FileOut = "$CustomPath\$File"
                         }
 
                         # Save file, Remove Text Change Visual Indicator, Return to Console
-                        [System.IO.File]::WriteAllLines($FileOut, $InputArray)
+
+                        # Slight improvement for desktop PowerShell ADS.
+                        if ((!$PwshBool) -and ($File -like '*:*')) { Set-Content -Value $InputArray -LiteralPath "$FileOut" }
+                        else { [System.IO.File]::WriteAllLines($FileOut, $InputArray) }
 
                         $TerminalOutput += "File saved."
                         $Changes = $FALSE
@@ -393,13 +398,16 @@
                         # Set output file path to current directory or user input directory (set path=*)
                         if (!$CustomPath) { $FileOut = "$PWD\$File" }
                         else {
-                            if (!(Test-Path -LiteralPath $CustomPath)) { New-Item -Path $CustomPath -ItemType Directory | Out-Null }
+                            if (!(Test-Path -LiteralPath $CustomPath 2>$NULL)) { New-Item -Path $CustomPath -ItemType Directory | Out-Null }
 
                             $FileOut = "$CustomPath\$File"
                         }
 
                         # Save file and Exit PseudoVym
-                        [System.IO.File]::WriteAllLines($FileOut, $InputArray)
+
+                        # Slight improvement for desktop PowerShell ADS.
+                        if ((!$PwshBool) -and ($File -like '*:*')) { Set-Content -Value $InputArray -LiteralPath "$FileOut" }
+                        else { [System.IO.File]::WriteAllLines($FileOut, $InputArray) }
 
                         Clear-Host
                         $ConsoleExit = $TRUE
@@ -411,10 +419,11 @@
             # Return to text contents
             elseif ($DevOption -eq ":") { return $File, $CustomPath, $Changes, $Debug, $ConsoleExit }
 
-            # Set output file directory (prefably absolute path)
-            elseif (($DevOption -like "set path=*") -and ($DevOption -notlike "*.*") -and ($DevOption -like "set path=*:\*") -and ($DevOption -notlike "*\")) {
+            # Set output file directory (use absolute path)
+            elseif (($DevOption -like "set path=*") -and ($DevOption -notlike "*.*") -and ($DevOption -like "set path=*:\*")) {
 
-                $TempPath = $DevOption.Replace("set path=",$NULL)
+                $TempPath = $DevOption.Replace("set path=",$NULL).Replace("'",$NULL).Replace('"',$NULL)
+                if ($TempPath -match '\\$') { $TempPath = $TempPath.Substring(0,$TempPath.Length-1) }
 
                 if ($TempPath -ne $PWD) { $CustomPath = $TempPath }
                 $TerminalOutput += "Output path saved."
@@ -423,7 +432,7 @@
             # Set filename (useful for copying files)
             elseif (($DevOption -like "set file=*") -and ($DevOption -like "*.*")) {
 
-                $File = $DevOption.Replace("set file=",$NULL)
+                $File = $DevOption.Replace("set file=",$NULL).Replace("'",$NULL).Replace('"',$NULL)
                 $TerminalOutput += "Filename saved."
             }
 
@@ -519,10 +528,16 @@
     $ArrowDown   = 40
     $Insert      = 45
     $Delete      = 46
-    $FuncKeys    = 112..123
+    $F1          = 112
+    $F2          = 113
+    $F3          = 114
+    $FuncKeys    = 115..123
 
     # Keys to be Ignored by User Input
-    $Stinky = $Shift, $CapsLock, $Escape, $EndKey, $HomeKey, $Insert, $FuncKeys
+    $Stinky = $Shift, $CapsLock, $Escape, $EndKey, $HomeKey, $Insert, $FuncKeys, $Ctrl, $Alt
+
+    # PowerShell version detection
+    if ($PSEdition -eq 'Core') { $PwshBool = $TRUE }
 
     # Return help info
     if ($Help) { return Get-Help PseudoVym }
@@ -540,7 +555,7 @@
 
         # Normal file
         else {
-
+            
             $FullPath = (Get-Item $File).FullName
             $ParentPath = Split-Path $FullPath -Parent
         }
@@ -794,11 +809,11 @@
                 }
 
 
-            # Save and/or Quit
+            # Save and/or Quit (Not SSH Compatible)
             $Alt
                 {
                     # Save and Quit
-                    if ($Key.ControlKeyState -like '*LeftAltPressed*') {
+                    if (($Key.ControlKeyState -like '*LeftAltPressed*') -or ($Key.VirtualKeyCode -eq $F1)) {
 
                         # Prompt for filename if not already set
                         if (!$File) {
@@ -825,7 +840,9 @@
                             else { $FileOut = "$CustomPath\$File" }
                         }
 
-                        [System.IO.File]::WriteAllLines($FileOut, $InputArray)
+                        # Slight improvement for desktop PowerShell ADS.
+                        if ((!$PwshBool) -and ($File -like '*:*')) { Set-Content -Value $InputArray -LiteralPath "$FileOut" }
+                        else { [System.IO.File]::WriteAllLines($FileOut, $InputArray) }
 
                         # Clear screen / Imitated Graceful Exit
                         Clear-Host
@@ -834,7 +851,7 @@
                         else { Write-Host "PS $PWD> vim" }
 
                         # Verify File Creation
-                        if (Test-Path -LiteralPath $FileOut) { Write-Host "File successfully saved." -ForegroundColor Green }
+                        if (Test-Path -LiteralPath $FileOut 2>$NULL) { Write-Host "File successfully saved." -ForegroundColor Green }
                         else { Write-Host "File failed to save." -ForegroundColor Red }
 
                         # Exit PseudoVym
@@ -842,7 +859,7 @@
                     }
 
                     # Quit
-                    elseif ($Key.ControlKeyState -like '*RightAltPressed*') {
+                    elseif (($Key.ControlKeyState -like '*RightAltPressed*') -or ($Key.VirtualKeyCode -eq $F1)) {
 
                         # Clear screen / Imitated Graceful Exit
                         Clear-Host
@@ -858,13 +875,72 @@
                         return
                     }
                 }
+            
+            # Save and Quit (SSH Compatible)
+            $F1
+                {
+                    # Prompt for filename if not already set
+                    if (!$File) {
+                        if (!$CustomPath) { Write-Host "`nCurrent Directory: " -ForegroundColor Yellow -NoNewline ; Write-Host $PWD }
+                        Write-Host "Save as: " -ForegroundColor Yellow -NoNewline ; $TempFile = Read-Host
+                    }
 
+                    if ($TempFile) {
+                        # Return to text page
+                        if ($TempFile -eq "back") { $TempFile = $NULL; continue }
+
+                        else {
+                            # Append .txt if file extension not explicitly typed
+                            if ($TempFile -notlike "*.*") { $File = $Tempfile + ".txt" }
+                            else { $File = $TempFile }
+
+                            $TempFile = $NULL
+                        }
+                    }
+
+                    # Create absolute path of output file / save file
+                    if (!$FileOut) {
+                        if (!$CustomPath) { $FileOut = "$PWD\$File" }
+                        else { $FileOut = "$CustomPath\$File" }
+                    }
+
+                    # Slight improvement for desktop PowerShell ADS.
+                    if ((!$PwshBool) -and ($File -like '*:*')) { Set-Content -Value $InputArray -LiteralPath "$FileOut" }
+                    else { [System.IO.File]::WriteAllLines($FileOut, $InputArray) }
+
+                    # Clear screen / Imitated Graceful Exit
+                    Clear-Host
+                    if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
+                    elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
+                    else { Write-Host "PS $PWD> vim" }
+
+                    # Verify File Creation
+                    if (Test-Path -LiteralPath $FileOut 2>$NULL) { Write-Host "File successfully saved." -ForegroundColor Green }
+                    else { Write-Host "File failed to save." -ForegroundColor Red }
+
+                    # Exit PseudoVym
+                    return
+                }
+
+            # Quit (SSH Compatible)
+            $F2
+                {
+                    # Clear screen / Imitated Graceful Exit
+                    Clear-Host
+                    if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
+                    elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
+                    else { Write-Host "PS $PWD> vim" }
+
+                    # Display if exited without saving changes or no changes needed to be saved
+                    if ($Changes) { Write-Host "Exited PseudoVym without saving." -ForegroundColor Yellow }
+                    else { Write-Host "Exited PseudoVym." -ForegroundColor Yellow }
+
+                    # Exit PseudoVym
+                    return
+                }
 
             # Developer Console
-            $Ctrl
-                {
-                    $File, $CustomPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole
-                }
+            $F3 { $File, $CustomPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole }
 
 
             # Valid / Invalid Keys
