@@ -21,9 +21,9 @@ functionality to others based on their **VirtualKeyCodes**.
 
 **Key Functionality:**
 
-   *[] **Left Alt**   --  Save and Quit (prompt for filename if one isn't set)* [NOT SSH COMPATIBLE]
+   *[] **Left Alt**   --  **[NOT SSH COMPATIBLE]** Save and Quit (prompt for filename if one isn't set)*
 
-   *[] **Right Alt**  --  Quit without Saving* [NOT SSH COMPATIBLE]
+   *[] **Right Alt**  --  **[NOT SSH COMPATIBLE]** Quit without Saving*
    
    *[] **F1**         --  Save and Quit (prompt for filename if one isn't set)*
 
