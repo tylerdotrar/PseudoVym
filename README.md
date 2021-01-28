@@ -21,11 +21,15 @@ functionality to others based on their **VirtualKeyCodes**.
 
 **Key Functionality:**
 
-   *[] **Left Alt**   --  Save and Quit (prompt for filename if one isn't set)*
+   *[] **Left Alt**   --  Save and Quit (prompt for filename if one isn't set)* [NOT SSH COMPATIBLE]
 
-   *[] **Right Alt**  --  Quit without Saving*
+   *[] **Right Alt**  --  Quit without Saving* [NOT SSH COMPATIBLE]
+   
+   *[] **F1**         --  Save and Quit (prompt for filename if one isn't set)*
 
-   *[] **Ctrl**       --  Open Vim styled "Developer Console"*
+   *[] **F2**         --  Quit without Saving*
+
+   *[] **F3**       --  Open Vim styled "Developer Console"*
    
    *[] **Delete**     --  Remove entire Active Line*
    
