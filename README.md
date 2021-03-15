@@ -47,7 +47,7 @@ functionality to others based on their **VirtualKeyCodes**.
 
    *[] **Right Alt**  --  **[LEGACY / NOT SSH COMPATIBLE]** Quit without Saving*
    
-   *[] **Ctrl**       --  **[LEGACY / NOT SSH COMPATIBLE]** Open Vim sytled "Developer Console"
+   *[] **Ctrl**       --  **[LEGACY / NOT SSH COMPATIBLE]** Open Vim styled "Developer Console"*
 
 When inputting a filename, all extensions are supported.  When no file extension is input,
 PseudoVym will search the PWD for a file with a matching base name to open; if no match
@@ -77,7 +77,7 @@ When in the Developer Console, type "help" to display a list available commands.
 # Notes
 Recommended usage is copy and pasting script contents into your **$PROFILE**.
 
-Does **NOT** work in PowerShell ISE; tested in PowerShell **v7.0.3** and **v5.1.19041.1**.
+Does **NOT** work in PowerShell ISE; tested in Core **v7.0.3**-**v7.1.3** and PowerShell **v5.1.19041.1**.
 
 # 200 IQ
 Walmart brand *Vim*... Vim *Pseudonym*... *Pseudo-Vim*... **PSEUDOVYM**.  Cheeky, I'm aware.
