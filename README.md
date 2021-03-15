@@ -25,17 +25,13 @@ functionality to others based on their **VirtualKeyCodes**.
 
 **Key Functionality:**
 
-![Get-Help](https://cdn.discordapp.com/attachments/620986290317426698/821050764222529537/Get-Help.png)
+![Get-Help](https://cdn.discordapp.com/attachments/620986290317426698/821057427159384141/unknown.png)
 
-   *[] **Left Alt**   --  **[NOT SSH COMPATIBLE]** Save and Quit (prompt for filename if one isn't set)*
-
-   *[] **Right Alt**  --  **[NOT SSH COMPATIBLE]** Quit without Saving*
-   
    *[] **F1**         --  Save and Quit (prompt for filename if one isn't set)*
 
    *[] **F2**         --  Quit without Saving*
 
-   *[] **F3**       --  Open Vim styled "Developer Console"*
+   *[] **F3**         --  Open Vim styled "Developer Console"*
    
    *[] **Delete**     --  Remove entire Active Line*
    
@@ -46,6 +42,12 @@ functionality to others based on their **VirtualKeyCodes**.
    *[] **Enter**      --  Create new line after Active Line (and move remaining text)*
    
    *[] **ArrowKeys**  --  Change Active Line and Character Placement*
+   
+   *[] **Left Alt**   --  **[LEGACY / NOT SSH COMPATIBLE]** Save and Quit (prompt for filename if one isn't set)*
+
+   *[] **Right Alt**  --  **[LEGACY / NOT SSH COMPATIBLE]** Quit without Saving*
+   
+   *[] **Ctrl**       --  **[LEGACY / NOT SSH COMPATIBLE]** Open Vim sytled "Developer Console"
 
 When inputting a filename, all extensions are supported.  When no file extension is input,
 PseudoVym will search the PWD for a file with a matching base name to open; if no match
