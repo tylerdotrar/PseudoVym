@@ -17,18 +17,20 @@
 #
 # Parameters:
 #    -File          -->    (Optional) Input/output file
-#    -Debug         -->    (Optional) Display position and input info
+#    -Debug         -->    (Optional) Display position and input info    
+#    -LegacyKeys    -->    (Optional) Enable original key configuration (L/R Alt + Ctrl)
 #    -Help          -->    (Optional) Return Get-Help info
 #
 # Special Keys:
-#    L Alt          -->    Save and quit  (Not SSH Compatible)
-#    R Alt          -->    Quit           (Not SSH Compatible)
 #    F1             -->    Save and quit
 #    F2             -->    Quit
 #    F3             -->    Developer console
 #    Delete         -->    Remove entire line
 #    Page Up        -->    Jump to first line
 #    Page Down      -->    Jump to last line
+#    L Alt          -->    Save and quit      (Legacy / Not SSH Compatible)
+#    R Alt          -->    Quit               (Legacy / Not SSH Compatible)
+#    Ctrl           -->    Developer console  (Legacy / Not SSH Compatible)
 #
 # Developer Console:
 #    help           -->    List available commands
@@ -52,9 +54,12 @@
 
     Param (
         [string] $File,
-        [switch] $Help,
-        [switch] $Debug
+        [switch] $Debug,
+        [switch] $LegacyKeys,
+        [switch] $Help
     )
+
+    $VersionNumber = 'v2.8.1'
 
     # Live Visual Formatting of Text
     function Vim-Formatting ([switch]$DevConsole) {
@@ -140,7 +145,7 @@
             ### Header formatting
 
             # Version Number
-            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "(v2.7.9)"
+            Write-Host "PseudoVym " -ForegroundColor Yellow -NoNewline ; Write-Host "($VersionNumber)"
 
             # Output path
             if ($Debug -or $CustomPath) {
@@ -514,8 +519,6 @@
     $Tab         = 9
     $Enter       = 13
     $Shift       = 16
-    $Ctrl        = 17
-    $Alt         = 18
     $CapsLock    = 20
     $Escape      = 27
     $PageUp      = 33
@@ -533,8 +536,13 @@
     $F3          = 114
     $FuncKeys    = 115..123
 
+    if ($LegacyKeys) {
+        $Ctrl    = 17
+        $Alt     = 18
+    }
+
     # Keys to be Ignored by User Input
-    $Stinky = $Shift, $CapsLock, $Escape, $EndKey, $HomeKey, $Insert, $FuncKeys, $Ctrl, $Alt
+    $Stinky = $Shift, $CapsLock, $Escape, $EndKey, $HomeKey, $Insert, $FuncKeys
 
     # PowerShell version detection
     if ($PSEdition -eq 'Core') { $PwshBool = $TRUE }
@@ -808,8 +816,77 @@
                     $CharDir = Change-ActiveChar -ArrowRight
                 }
 
+            
+            # Save and Quit (SSH Compatible)
+            $F1
+                {
+                    # Prompt for filename if not already set
+                    if (!$File) {
+                        if (!$CustomPath) { Write-Host "`nCurrent Directory: " -ForegroundColor Yellow -NoNewline ; Write-Host $PWD }
+                        Write-Host "Save as: " -ForegroundColor Yellow -NoNewline ; $TempFile = Read-Host
+                    }
 
-            # Save and/or Quit (Not SSH Compatible)
+                    if ($TempFile) {
+                        # Return to text page
+                        if ($TempFile -eq "back") { $TempFile = $NULL; continue }
+
+                        else {
+                            # Append .txt if file extension not explicitly typed
+                            if ($TempFile -notlike "*.*") { $File = $Tempfile + ".txt" }
+                            else { $File = $TempFile }
+
+                            $TempFile = $NULL
+                        }
+                    }
+
+                    # Create absolute path of output file / save file
+                    if (!$FileOut) {
+                        if (!$CustomPath) { $FileOut = "$PWD\$File" }
+                        else { $FileOut = "$CustomPath\$File" }
+                    }
+
+                    # Slight improvement for desktop PowerShell ADS.
+                    if ((!$PwshBool) -and ($File -like '*:*')) { Set-Content -Value $InputArray -LiteralPath "$FileOut" }
+                    else { [System.IO.File]::WriteAllLines($FileOut, $InputArray) }
+
+                    # Clear screen / Imitated Graceful Exit
+                    Clear-Host
+                    if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
+                    elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
+                    else { Write-Host "PS $PWD> vim" }
+
+                    # Verify File Creation
+                    if (Test-Path -LiteralPath $FileOut 2>$NULL) { Write-Host "File successfully saved." -ForegroundColor Green }
+                    else { Write-Host "File failed to save." -ForegroundColor Red }
+
+                    # Exit PseudoVym
+                    return
+                }
+
+
+            # Quit (SSH Compatible)
+            $F2
+                {
+                    # Clear screen / Imitated Graceful Exit
+                    Clear-Host
+                    if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
+                    elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
+                    else { Write-Host "PS $PWD> vim" }
+
+                    # Display if exited without saving changes or no changes needed to be saved
+                    if ($Changes) { Write-Host "Exited PseudoVym without saving." -ForegroundColor Yellow }
+                    else { Write-Host "Exited PseudoVym." -ForegroundColor Yellow }
+
+                    # Exit PseudoVym
+                    return
+                }
+
+
+            # Developer Console
+            $F3 { $File, $CustomPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole }
+
+
+            # Save and/or Quit (Legacy / Not SSH Compatible)
             $Alt
                 {
                     # Save and Quit
@@ -875,72 +952,10 @@
                         return
                     }
                 }
-            
-            # Save and Quit (SSH Compatible)
-            $F1
-                {
-                    # Prompt for filename if not already set
-                    if (!$File) {
-                        if (!$CustomPath) { Write-Host "`nCurrent Directory: " -ForegroundColor Yellow -NoNewline ; Write-Host $PWD }
-                        Write-Host "Save as: " -ForegroundColor Yellow -NoNewline ; $TempFile = Read-Host
-                    }
 
-                    if ($TempFile) {
-                        # Return to text page
-                        if ($TempFile -eq "back") { $TempFile = $NULL; continue }
 
-                        else {
-                            # Append .txt if file extension not explicitly typed
-                            if ($TempFile -notlike "*.*") { $File = $Tempfile + ".txt" }
-                            else { $File = $TempFile }
-
-                            $TempFile = $NULL
-                        }
-                    }
-
-                    # Create absolute path of output file / save file
-                    if (!$FileOut) {
-                        if (!$CustomPath) { $FileOut = "$PWD\$File" }
-                        else { $FileOut = "$CustomPath\$File" }
-                    }
-
-                    # Slight improvement for desktop PowerShell ADS.
-                    if ((!$PwshBool) -and ($File -like '*:*')) { Set-Content -Value $InputArray -LiteralPath "$FileOut" }
-                    else { [System.IO.File]::WriteAllLines($FileOut, $InputArray) }
-
-                    # Clear screen / Imitated Graceful Exit
-                    Clear-Host
-                    if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
-                    elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
-                    else { Write-Host "PS $PWD> vim" }
-
-                    # Verify File Creation
-                    if (Test-Path -LiteralPath $FileOut 2>$NULL) { Write-Host "File successfully saved." -ForegroundColor Green }
-                    else { Write-Host "File failed to save." -ForegroundColor Red }
-
-                    # Exit PseudoVym
-                    return
-                }
-
-            # Quit (SSH Compatible)
-            $F2
-                {
-                    # Clear screen / Imitated Graceful Exit
-                    Clear-Host
-                    if ($CustomPath) { Write-Host "PS $PWD> vim $CustomPath\$File" }
-                    elseif ($File) { Write-Host "PS $PWD> vim .\$File" }
-                    else { Write-Host "PS $PWD> vim" }
-
-                    # Display if exited without saving changes or no changes needed to be saved
-                    if ($Changes) { Write-Host "Exited PseudoVym without saving." -ForegroundColor Yellow }
-                    else { Write-Host "Exited PseudoVym." -ForegroundColor Yellow }
-
-                    # Exit PseudoVym
-                    return
-                }
-
-            # Developer Console
-            $F3 { $File, $CustomPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole }
+            # Developer Console (Legacy / Not SSH Compatible)
+            $Ctrl { $File, $CustomPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole }
 
 
             # Valid / Invalid Keys
