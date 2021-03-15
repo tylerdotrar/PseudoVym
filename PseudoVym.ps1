@@ -1,7 +1,7 @@
 ﻿function PseudoVym {
 #.SYNOPSIS
 # Rudimentary PowerShell variant of Vim.
-# ARBITRARY VERSION NUMBER:  2.7.9
+# ARBITRARY VERSION NUMBER:  2.8.1
 # AUTHOR:  Tyler McCann (@tyler.rar)
 #
 #.DESCRIPTION
@@ -21,14 +21,14 @@
 #    -Help          -->    (Optional) Return Get-Help info
 #
 # Special Keys:
-#    LCtrl          -->    Save and quit  (Not SSH Compatible)
-#    RCtrl          -->    Quit           (Not SSH Compatible)
+#    L Alt          -->    Save and quit  (Not SSH Compatible)
+#    R Alt          -->    Quit           (Not SSH Compatible)
 #    F1             -->    Save and quit
 #    F2             -->    Quit
 #    F3             -->    Developer console
 #    Delete         -->    Remove entire line
-#    PageUp         -->    Jump to first line
-#    PageDown       -->    Jump to last line
+#    Page Up        -->    Jump to first line
+#    Page Down      -->    Jump to last line
 #
 # Developer Console:
 #    help           -->    List available commands
