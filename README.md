@@ -8,6 +8,10 @@ Also, I wrote this on a whim because I saw a comment somewhere stating you neede
 download third party applications for this functionality -- but I figured it would be
 a relatively fun and easy project to do via PowerShell.
 
+![MyFile](https://cdn.discordapp.com/attachments/620986290317426698/821050729023930439/MyFile.png)
+
+![ADS](https://cdn.discordapp.com/attachments/620986290317426698/821050747155775599/ADS.png)
+
 # Code / Functionality
 The function name is "**PseudoVym**" however there's a built in alias called "**vim**".
 
@@ -20,6 +24,8 @@ from the user using **$Host.UI.RawUI.ReadKey** -- then ignoring specific keys an
 functionality to others based on their **VirtualKeyCodes**.
 
 **Key Functionality:**
+
+![Get-Help](https://cdn.discordapp.com/attachments/620986290317426698/821050764222529537/Get-Help.png)
 
    *[] **Left Alt**   --  **[NOT SSH COMPATIBLE]** Save and Quit (prompt for filename if one isn't set)*
 
