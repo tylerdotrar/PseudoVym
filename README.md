@@ -10,8 +10,6 @@ a relatively fun and easy project to do via PowerShell.
 
 ![MyFile](https://cdn.discordapp.com/attachments/620986290317426698/821257417333538816/unknown.png)
 
-![ADS](https://cdn.discordapp.com/attachments/620986290317426698/821257252551655444/unknown.png)
-
 # Code / Functionality
 The function name is "**PseudoVym**" however there's a built in alias called "**vim**".
 
@@ -55,6 +53,8 @@ is found, then the file extension will default to **.txt** and input will be NUL
 
 # Developer Console
 When in the Developer Console, type "help" to display a list available commands.
+
+![ADS](https://cdn.discordapp.com/attachments/620986290317426698/821257252551655444/unknown.png)
 
 **Available Commands:**
 
