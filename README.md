@@ -8,9 +8,9 @@ Also, I wrote this on a whim because I saw a comment somewhere stating you neede
 download third party applications for this functionality -- but I figured it would be
 a relatively fun and easy project to do via PowerShell.
 
-![MyFile](https://cdn.discordapp.com/attachments/620986290317426698/821050729023930439/MyFile.png)
+![MyFile](https://cdn.discordapp.com/attachments/620986290317426698/821257417333538816/unknown.png)
 
-![ADS](https://cdn.discordapp.com/attachments/620986290317426698/821050747155775599/ADS.png)
+![ADS](https://cdn.discordapp.com/attachments/620986290317426698/821257252551655444/unknown.png)
 
 # Code / Functionality
 The function name is "**PseudoVym**" however there's a built in alias called "**vim**".
@@ -25,7 +25,7 @@ functionality to others based on their **VirtualKeyCodes**.
 
 **Key Functionality:**
 
-![Get-Help](https://cdn.discordapp.com/attachments/620986290317426698/821057427159384141/unknown.png)
+![Get-Help](https://cdn.discordapp.com/attachments/620986290317426698/821255532550684682/unknown.png)
 
    *[] **F1**         --  Save and Quit (prompt for filename if one isn't set)*
 
@@ -58,7 +58,7 @@ When in the Developer Console, type "help" to display a list available commands.
 
 **Available Commands:**
 
-   *[] **w**         --  Save File (prompt for filename if one isn't set)*
+   *[] **w**          --  Save File (prompt for filename if one isn't set)*
    
    *[] **q**          --  Quit PseudoVym without Saving*
    
@@ -68,7 +68,13 @@ When in the Developer Console, type "help" to display a list available commands.
    
    *[] **set path=**  --  Set / Change Output Path (Requires absolute path; NO file; **Syntax:** 'set path=C:\Users\Bobby\Documents')*
    
+   *[] **find=**      --  Search for Strings (**Syntax:** 'find=example')*
+   
+   *[] **jump=**      --  Change Active Line (**Syntax:** 'jump=16')*
+   
    *[] **dbg**        --  Toggle Debugger*
+   
+   *[] **legacy**     --  Toggle Legacy Keys*
    
    *[] **cls**        --  Clear Console Output*
    
