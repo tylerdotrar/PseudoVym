@@ -1,7 +1,7 @@
 ﻿function PseudoVym {
 #.SYNOPSIS
 # Rudimentary PowerShell variant of Vim.
-# ARBITRARY VERSION NUMBER:  2.8.1
+# ARBITRARY VERSION NUMBER:  2.9.3
 # AUTHOR:  Tyler McCann (@tyler.rar)
 #
 #.DESCRIPTION
@@ -14,6 +14,7 @@
 #
 # Recommendations:
 # -- Use 'Vim.psm1' (and included instructions) from the repo to load this script from your $PROFILE.
+# -- Use the 'vim' alias rather than 'PseudoVym' for efficiency.
 #
 # Parameters:
 #    -File          -->    (Optional) Input/output file
@@ -59,7 +60,7 @@
         [switch] $Help
     )
 
-    $VersionNumber = 'v2.8.1'
+    $VersionNumber = 'v2.9.3'
 
     # Live Visual Formatting of Text
     function Vim-Formatting ([switch]$DevConsole) {
@@ -256,15 +257,15 @@
         function Terminal-Printing ([string]$Command) {
 
             if ($Command -eq "[Redacted]") { Write-Host $Command -ForegroundColor Yellow }
-            elseif ($GreenOutput -contains $Command) { Write-Host $Command -ForegroundColor Green }
+            elseif (($GreenOutput -contains $Command) -or ($Command -like "Line(s):*")) { Write-Host $Command -ForegroundColor Green }
             elseif ($RedOutput -contains $Command) { Write-Host $Command -ForegroundColor Red }
             else { Write-Host $Command }
         }
 
-        $GreenOutput = "File saved.", "Output path saved.", "Filename saved.", "Debugger enabled."
-        $RedOutput = "Invalid input.", "Debugger disabled."
+        $GreenOutput = "File saved.", "Output path saved.", "Filename saved.", "Debugger enabled.", "Legacy keys enabled."
+        $RedOutput = "Invalid input.", "Debugger disabled.", "No match(es) found.", "Invalid index.", "Legacy keys disabled."
         $TerminalOutput = @()
- 
+        
         while ($TRUE) {
             
                 Clear-Host
@@ -275,16 +276,16 @@
             if (!$SkipRefresh) {
 
                 # Display all console output
-                if ($TerminalOutput.Count -lt 5) { 
+                if ($TerminalOutput.Count -lt 7) { 
                     foreach ($TerminalLine in $TerminalOutput) {
 
                         Terminal-Printing -Command $TerminalLine
                     }
                 }
 
-                # Display the last 10 console outputs
+                # Display the last 14 console outputs
                 else { 
-                    for ($i = $TerminalOutput.Count - 5; $i -lt $TerminalOutput.Count; $i++) {
+                    for ($i = $TerminalOutput.Count - 7; $i -lt $TerminalOutput.Count; $i++) {
 
                         Terminal-Printing -Command $TerminalOutput[$i]
                     }
@@ -300,7 +301,10 @@
                 Write-Host "  wq" -ForegroundColor Yellow -NoNewLine ; Write-Host "              -->  Save and Quit"
                 Write-Host "  set file=*" -ForegroundColor Yellow -NoNewLine ; Write-Host "      -->  Output Filename"
                 Write-Host "  set path=*" -ForegroundColor Yellow -NoNewline ; Write-Host "      -->  Output Directory"
+                Write-Host "  find=*" -ForegroundColor Yellow -NoNewLine ; Write-Host "          -->  Search for String"
+                Write-Host "  jump=*" -ForegroundColor Yellow -NoNewLine ; Write-Host "          -->  Change Active Line"
                 Write-Host "  dbg" -ForegroundColor Yellow -NoNewLine ; Write-Host "             -->  Toggle Debugger"
+                Write-Host "  legacy" -ForegroundColor Yellow -NoNewLine ; Write-Host "          -->  Toggle Legacy Keys"
                 Write-Host "  cls" -ForegroundColor Yellow -NoNewline ; Write-Host "             -->  Clear Screen"
                 Write-Host "  :" -ForegroundColor Yellow -NoNewline ; Write-Host "               -->  Exit Developer Console"
             }
@@ -370,7 +374,7 @@
                 Clear-Host
                 $ConsoleExit = $TRUE
 
-                return $File, $CustomPath, $Changes, $Debug, $ConsoleExit
+                return $File, $CustomPath, $Changes, $Debug, $ConsoleExit, $ArrayDir, $LineInput, $LegacyKeys
             }
 
             # Save and Quit
@@ -416,13 +420,13 @@
 
                         Clear-Host
                         $ConsoleExit = $TRUE
-                        return $File, $CustomPath, $Changes, $Debug, $ConsoleExit
+                        return $File, $CustomPath, $Changes, $Debug, $ConsoleExit, $ArrayDir, $LineInput, $LegacyKeys
                     }
                 }
             }
 
             # Return to text contents
-            elseif ($DevOption -eq ":") { return $File, $CustomPath, $Changes, $Debug, $ConsoleExit }
+            elseif ($DevOption -eq ":") { return $File, $CustomPath, $Changes, $Debug, $ConsoleExit, $ArrayDir, $LineInput, $LegacyKeys }
 
             # Set output file directory (use absolute path)
             elseif (($DevOption -like "set path=*") -and ($DevOption -notlike "*.*") -and ($DevOption -like "set path=*:\*")) {
@@ -441,12 +445,50 @@
                 $TerminalOutput += "Filename saved."
             }
 
+            # Search Functionality
+            elseif ($DevOption -like "find=*") {
+                $FindString = $DevOption.Replace("find=",$NULL).Replace("'",$NULL).Replace('"',$NULL)
+
+                $StringMatches = $InputArray | ?{$_ -like "*$FindString*"}
+
+                if ($StringMatches){
+                    #$TerminalOutput += "Match found."
+
+                    $MatchedLines = @()
+                    foreach ($StringMatch in $StringMatches) {
+                        $MatchedLines += $InputArray.IndexOf($StringMatch)
+                    }
+                    $TerminalOutput += "Line(s): " + ($MatchedLines -join ",") 
+                }
+                else { $TerminalOutput += "No match(es) found." }
+
+            }
+
+            # Jump to Specific Lines
+            elseif ($DevOption -like "jump=*") {
+                $ProposedIndex = $DevOption.Replace("jump=",$NULL).Replace("'",$NULL).Replace('"',$NULL) -as [int]
+
+                if ($ProposedIndex -and ($ProposedIndex -lt ($InputArray.Count)) -and ($ProposedIndex -ge 0)) {
+                    $LineInput = $InputArray[$ProposedIndex]
+                    return $File, $CustomPath, $Changes, $Debug, $ConsoleExit, $ProposedIndex, $LineInput
+                }
+                else { $TerminalOutput += "Invalid index."}
+            }
+
             # Toggle Debugger
             elseif ($DevOption -eq "dbg") { 
                 $Debug = !$Debug
 
                 if ($Debug) { $TerminalOutput += "Debugger enabled." }
                 else { $TerminalOutput += "Debugger disabled." }
+            }
+
+            # Toggle Legacy Keys
+            elseif ($DevOption -eq "legacy") {
+                $LegacyKeys = !$LegacyKeys
+
+                if ($LegacyKeys) { $TerminalOutput += "Legacy keys enabled." }
+                else { $TerminalOutput += "Legacy keys disabled." }
             }
 
             # Clear console screen
@@ -486,9 +528,9 @@
         else { $CharDir = $Position - ($InputArray[$ArrayDir].Length + 1) }
 
         # Set input to new active line
-        $Input = $InputArray[$ArrayDir]
+        $LineInput = $InputArray[$ArrayDir]
 
-        return $ArrayDir, $CharDir, $Input
+        return $ArrayDir, $CharDir, $LineInput
     }
 
     # Key Functionality for ArrowLeft and ArrowRight
@@ -536,13 +578,8 @@
     $F3          = 114
     $FuncKeys    = 115..123
 
-    if ($LegacyKeys) {
-        $Ctrl    = 17
-        $Alt     = 18
-    }
-
     # Keys to be Ignored by User Input
-    $Stinky = $Shift, $CapsLock, $Escape, $EndKey, $HomeKey, $Insert, $FuncKeys
+    $Stinky = $Shift, $CapsLock, $Escape, $EndKey, $HomeKey, $Insert, $FuncKeys, 17, 18
 
     # PowerShell version detection
     if ($PSEdition -eq 'Core') { $PwshBool = $TRUE }
@@ -584,7 +621,7 @@
         }
 
         $ArrayDir = ($LineCount - 1)
-        $Input = $InputArray[$ArrayDir]
+        $LineInput = $InputArray[$ArrayDir]
         $CharDir = -1
     }
 
@@ -599,7 +636,7 @@
             $Changes = $TRUE
         }
 
-        $Input = $NULL
+        $LineInput = $NULL
         $ArrayDir = 0
         $CharDir = -1
     }
@@ -615,10 +652,14 @@
         # Exit PseudoVym via Developer Console
         if ($ConsoleExit) { return }
 
+        # Toggle Legacy Keys
+        if ($LegacyKeys) { $Ctrl = 17; $Alt = 18 }
+        else { $Ctrl = $NULL; $Alt = $NULL}
+
         # Initialize input / Update selected line with new input
         if (!$Skip) {
-            if (!$InputArray) { $InputArray = @("$Input") }
-            else { $InputArray[$ArrayDir] = $Input }
+            if (!$InputArray) { $InputArray = @("$LineInput") }
+            else { $InputArray[$ArrayDir] = $LineInput }
         }
         $Skip = $FALSE
 
@@ -633,10 +674,10 @@
         }
 
         # Establish remainder for left/right arrow key functionality
-        if ($TempInput -ne $Input) {
+        if ($TempInput -ne $LineInput) {
 
-            if ($Input.Length -gt 1) { $Remainder = $Input.Replace($TempInput,$NULL) }
-            else { $Remainder = $Input }
+            if ($LineInput.Length -gt 1) { $Remainder = $LineInput.Replace($TempInput,$NULL) }
+            else { $Remainder = $LineInput }
             $UseTemp = $TRUE
         }
 
@@ -651,21 +692,21 @@
             # Remove Character
             $Backspace
                 {
-                    if ($Input) {
-                        if ($Input.Length -gt 1) {
+                    if ($LineInput) {
+                        if ($LineInput.Length -gt 1) {
 
                             # Remove last character of line (if input mark at end of line)
-                            if (!$UseTemp) { $Input = $Input.Substring(0,$Input.Length - 1) }
+                            if (!$UseTemp) { $LineInput = $LineInput.Substring(0,$LineInput.Length - 1) }
 
                             # Remove last character of input buffer (if input mark NOT at end of line)
                             else {
                                 $TempInput = $TempInput.Substring(0,$TempInput.Length - 1)
-                                $Input = $TempInput + $Remainder
+                                $LineInput = $TempInput + $Remainder
                             }
                         }
 
                         # Remove last character of line (if 1 character in line)
-                        elseif ($Input.Length -eq 1) { $Input = $NULL }
+                        elseif ($LineInput.Length -eq 1) { $LineInput = $NULL }
                     }
 
                     # Remove entire line / create new array from text contents (if 0 characters in line)
@@ -680,7 +721,7 @@
                         # Fix temporary null input if first line is removed
                         if ($NewArray.Count -eq 0) {
                             $Refresh = $FALSE
-                            $InputArray = @("$Input")
+                            $InputArray = @("$LineInput")
                         }
                         else { $InputArray = $NewArray }
 
@@ -688,7 +729,7 @@
 
                         # Change active line
                         if ($ArrayDir -gt 0) { $ArrayDir-- }
-                        $Input = $InputArray[$ArrayDir]
+                        $LineInput = $InputArray[$ArrayDir]
                     }
 
                     # Text Changes Visual Indicator
@@ -703,7 +744,7 @@
                     if ($InputArray.Count -eq 1) {
                         # Text Changes Visual Indicator
                         $Changes = $TRUE
-                        $Input = $NULL
+                        $LineInput = $NULL
                     }
                     else {
                         # Remove entire line / create new array from text contents
@@ -719,7 +760,7 @@
 
                         # Change active line
                         if ($ArrayDir -gt 0) { $ArrayDir-- }
-                        $Input = $InputArray[$ArrayDir]
+                        $LineInput = $InputArray[$ArrayDir]
 
                         # Text Changes Visual Indicator
                         $Changes = $TRUE
@@ -732,13 +773,13 @@
                 {
                     # Save current input to active line, set null new line
                     if (!$TempRemainder) {
-                        $InputArray[$ArrayDir] = $Input
-                        $Input = $NULL
+                        $InputArray[$ArrayDir] = $LineInput
+                        $LineInput = $NULL
                     }
                     # Save preface to active line, send remainder to new line
                     else {
                         $InputArray[$ArrayDir] = $TempInput
-                        $Input = $TempRemainder
+                        $LineInput = $TempRemainder
                     }
 
                     $NewArray = @()
@@ -749,7 +790,7 @@
                         # Append empty input line to new array
                         else {
                             $NewArray += $InputArray[$i]
-                            $NewArray += $Input
+                            $NewArray += $LineInput
                         }
                     }
 
@@ -779,28 +820,28 @@
             # Change Active Line (Up)
             $ArrowUp
                 {
-                    $ArrayDir, $CharDir, $Input = Change-ActiveLine -ArrowUp
+                    $ArrayDir, $CharDir, $LineInput = Change-ActiveLine -ArrowUp
                 }
 
 
             # Change Active Line (Down)
             $ArrowDown
                 {
-                    $ArrayDir, $CharDir, $Input = Change-ActiveLine -ArrowDown
+                    $ArrayDir, $CharDir, $LineInput = Change-ActiveLine -ArrowDown
                 }
 
 
             # Change Active Line (Top)
             $PageUp
                 {
-                    $ArrayDir, $CharDir, $Input = Change-ActiveLine -PageUp
+                    $ArrayDir, $CharDir, $LineInput = Change-ActiveLine -PageUp
                 }
 
             
             # Change Active Line (Bottom)
             $PageDown
                 {
-                    $ArrayDir, $CharDir, $Input = Change-ActiveLine -PageDown
+                    $ArrayDir, $CharDir, $LineInput = Change-ActiveLine -PageDown
                 }
 
             # Change Active Character (Left)
@@ -883,7 +924,7 @@
 
 
             # Developer Console
-            $F3 { $File, $CustomPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole }
+            $F3 { $File, $CustomPath, $Changes, $Debug, $ConsoleExit, $ArrayDir, $LineInput, $LegacyKeys = Vim-DevConsole }
 
 
             # Save and/or Quit (Legacy / Not SSH Compatible)
@@ -955,7 +996,7 @@
 
 
             # Developer Console (Legacy / Not SSH Compatible)
-            $Ctrl { $File, $CustomPath, $Changes, $Debug, $ConsoleExit = Vim-DevConsole }
+            $Ctrl { $File, $CustomPath, $Changes, $Debug, $ConsoleExit, $ArrayDir, $LineInput, $LegacyKeys = Vim-DevConsole }
 
 
             # Valid / Invalid Keys
@@ -970,12 +1011,12 @@
                     # Valid Characters
                     else {
                         # Append character to end of line
-                        if (!$UseTemp) { $Input += $Key.Character }
+                        if (!$UseTemp) { $LineInput += $Key.Character }
 
                         # Append character to input buffer
                         else {
                             $TempInput += $Key.Character
-                            $Input = $TempInput + $Remainder
+                            $LineInput = $TempInput + $Remainder
                         }
 
                         # Text Changes Visual Indicator
