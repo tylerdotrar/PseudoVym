@@ -29,6 +29,7 @@ jobs:
       - name: Configure PowerShell Script for IRM Support 
         run: |
           echo "# This line should enable Invoke-WebRequest support." > index.html
+          dos2unix PseudoVym.ps1
           cat PseudoVym.ps1 >> index.html
 
       # Host Repository
