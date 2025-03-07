@@ -3,7 +3,7 @@ name: Deploy Script Content to Github-Pages
 
 on:
   push:
-    branches: ["main"]  # Runs on pushes targeting the default branch
+    branches: ["master"]  # Runs on pushes targeting the default branch
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
 
 jobs:
