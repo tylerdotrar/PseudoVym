@@ -28,8 +28,10 @@ jobs:
       # Configure Script for Hosting (only works with Windows CLRF encoded files)
       - name: Configure PowerShell Script for IRM Support 
         run: |
+          sudo apt install dox2unix -y
           echo "# This line should enable Invoke-WebRequest support." > index.html
-          tail -c +2 PseudoVym.ps1 >> index.html
+          dox2unix PseudoVym.ps1
+          cat PseudoVym.ps1 >> index.html
 
       # Host Repository
       - name: Upload artifact
