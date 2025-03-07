@@ -25,11 +25,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      # Configure Script for Hosting (removing CLRF encoding if created on Windows)
+      # Configure Script for Hosting (only works with Windows CLRF encoded files)
       - name: Configure PowerShell Script for IRM Support 
         run: |
           echo "# This line should enable Invoke-WebRequest support." > index.html
-          awk '{ sub("\r$", ""); print }' PseudoVym.ps1 >> index.html
+          tail -c +2 PseudoVym.ps1 >> index.html
 
       # Host Repository
       - name: Upload artifact
