@@ -28,16 +28,15 @@ jobs:
       # Configure Script for Hosting (only works with Windows CLRF encoded files)
       - name: Configure PowerShell Script for IRM Support 
         run: |
-          sudo apt install dox2unix -y
+          rm README.md 2>/dev/null
           echo "# This line should enable Invoke-WebRequest support." > index.html
-          dox2unix PseudoVym.ps1
-          cat PseudoVym.ps1 >> index.html
+          awk '{ sub("\r$", ""); print }' PseudoVym.ps1 >> index.html
 
       # Host Repository
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'index.html' # Upload only the target script converted to 'index.html'
+          path: '.' # Upload the whole directory (can cause issues between index.html and README.md)
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
