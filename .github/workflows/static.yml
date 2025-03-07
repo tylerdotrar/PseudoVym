@@ -1,0 +1,35 @@
+# Simple workflow for hosting a PowerShell script within a minimal Github Pages branch
+name: Deploy Script Content to Github-Pages
+
+on:
+  push:
+    branches: ["main"]  # Runs on pushes targeting the default branch
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      # Setup Repo for CI/CD
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # Configure Script for Hosting
+      - name: Configure PowerShell Script for IRM Support 
+        run: |
+          echo "# This line should enable Invoke-WebRequest support." > index.html
+          cat PseudoVym.ps1 >> index.html
+
+      # Host Repository
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' # Upload entire repository
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
